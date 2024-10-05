@@ -33,11 +33,15 @@ class Power(db.Model, SerializerMixin):
     name = db.Column(db.String)
     description = db.Column(db.String)
 
-    # add relationship
-
-    # add serialization rules
-
-    # add validation
+    hero_powers = db.relationship('HeroPower', back_populates='power', cascade="all, delete-orphan")
+    
+    serialize_only = ('id', 'name', 'description')
+    
+    @validates('description')
+    def validates_description(self, key, value):
+        if not value or len(value) < 20:
+            raise AssertionError('Description must be at least 20 characters long')
+        return value
 
     def __repr__(self):
         return f'<Power {self.id}>'
@@ -49,11 +53,18 @@ class HeroPower(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     strength = db.Column(db.String, nullable=False)
 
-    # add relationships
+    hero_id = db.Column(db.Integer, db.ForeignKey('heroes.id'), nullable=False)
+    power_id = db.Column(db.Integer, db.ForeignKey('powers.id'), nullable=False)
+    hero = db.relationship('Hero', back_populates='hero_powers')
+    power = db.relationship('Power', back_populates='hero_powers')
 
-    # add serialization rules
+    serialize_only = ('id', 'strength', 'hero_id', 'power_id')
 
-    # add validation
+    @validates('strength')
+    def validate_strength(self, key, value):
+        if value not in ['Strong', 'Weak', 'Average']:
+            raise AssertionError("Strength must be either 'Strong', 'Weak', or 'Average'")
+        return value
 
     def __repr__(self):
         return f'<HeroPower {self.id}>'
